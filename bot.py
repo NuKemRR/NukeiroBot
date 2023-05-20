@@ -1,14 +1,33 @@
+import csv
+import json
 import os
 import random
+from datetime import datetime, timedelta
 
 import discord
-import csv
+import requests
 from dotenv import load_dotenv
 
 intents = discord.Intents.default()
 intents.message_content = True
 
 client = discord.Client(intents=intents)
+
+
+def get_gif(search_term):
+    lmt = 8
+    ckey = 'NukeiroBot'
+
+    r = requests.get(
+        "https://tenor.googleapis.com/v2/search?q=%s&key=%s&client_key=%s&limit=%s" % (
+            search_term, tenor_api, ckey, lmt))
+    if r.status_code == 200:
+        # load the GIFs using the urls for the smaller GIF sizes
+        top_8gifs = json.loads(r.content)
+        return top_8gifs['results'][random.randrange(0, 7)]['media_formats']['gif']['url']
+    else:
+        top_8gifs = None
+        print('failed')
 
 
 @client.event
@@ -44,7 +63,7 @@ tense_quotes = [
 
 
 @client.event
-async def on_message(message):
+async def on_message(message, final_message=''):
     print(str(message.author) + ' - ' + ': ' + str(message.content))
 
     with open('messages.csv', 'a', newline='') as f:
@@ -59,19 +78,19 @@ async def on_message(message):
     # message.author.id == 164047938325184512:  # mike id await message.channel.send(
     # 'https://i.imgur.com/vcYCRXx.gif') return
     if 'skyrim' in message.content.lower():
-        await message.channel.send(' 冷 SKYRIM 冷 \n 冷 CRINGE 冷 ')
-        return
+        # await message.channel.send(get_gif('skyrim'))
+        final_message += str(get_gif('cringe')) + '\n'
     if 'nigger' in message.content.lower():
         await message.delete()
     if any(word in message.content.lower() for word in ['paulo', 'nukem', 'nukeiro']):
-        await message.channel.send('https://media.tenor.com/SuqMnsgRSpwAAAAd/tense1983-rage.gif')
-        return
+        # await message.channel.send('https://media.tenor.com/SuqMnsgRSpwAAAAd/tense1983-rage.gif')
+        final_message += 'https://media.tenor.com/SuqMnsgRSpwAAAAd/tense1983-rage.gif\n'
     if any(word in message.content.lower() for word in ['mike', 'yoxide', 'yoxido']):
-        await message.channel.send('https://media.tenor.com/bbAIVRoGWUcAAAAC/tense1983-csgo.gif')
-        return
+        # await message.channel.send('https://media.tenor.com/bbAIVRoGWUcAAAAC/tense1983-csgo.gif')
+        final_message += get_gif("gigachad") + '\n'
     if any(word in message.content.lower() for word in ['gold', 'gold801']):
-        await message.channel.send('https://tenor.com/view/cursed-emoji-smiley-gif-15515099')
-        return
+        # await message.channel.send('https://tenor.com/view/cursed-emoji-smiley-gif-15515099')
+        final_message += 'https://tenor.com/view/cursed-emoji-smiley-gif-15515099\n'
     if message.content == 'TENSE QUOTES LIST PLS':
         line = ''
         for x in range(1, len(tense_quotes)):
@@ -82,10 +101,27 @@ async def on_message(message):
         await message.channel.send(random.choice(tense_quotes))
         return
     if any(word in message.content.lower() for word in ['loser', "lo'ser"]):
-        await message.channel.send('https://media.tenor.com/-4PV6apuEnIAAAAd/kratos.gif')
+        # await message.channel.send("lo'sers\n" + 'https://media.tenor.com/-4PV6apuEnIAAAAd/kratos.gif')
+        final_message += "lo'sers\n" + 'https://media.tenor.com/-4PV6apuEnIAAAAd/kratos.gif\n'
+    if any(word in message.content.lower() for word in ['eu odeio']):
+        # await message.channel.send(get_gif('the rock eyebrow'))
+        final_message += get_gif('the rock eyebrow')
+    if any(word in message.content.lower() for word in ['que horas são?']):
+        now = datetime.now()
+        continente = now + timedelta(hours=1)
+        await message.channel.send(
+           'Horas de comprares um relógio.\nKappa tou zuando com você!\nAqui está as horas: ' + now.strftime(
+               "%H:%M:%S\n" + continente.strftime("%H:%M:%S") + " Para os lo'sers do continente"))
         return
+    if message.content.startswith('Ontem tem H?'):
+        # await message.channel.send(get_gif('kys'))
+        final_message += get_gif('kys') + '\n'
+    if message.content != '':
+        await message.channel.send(final_message)
+
 
 load_dotenv()
 token = os.getenv('DISCORD_TOKEN')
+tenor_api = os.getenv('TENOR_API_KEY')
+
 client.run(token)
-print('leaving :(')
